@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Kod ile Hızlı Giriş</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .login-container {
+            background-color: #fff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+        }
+        h2 { color: #333; margin-top: 0; }
+        p.subtitle { color: #666; font-size: 14px; margin-bottom: 20px; }
+        .qr-box {
+            margin: 20px 0;
+            padding: 20px;
+            border: 2px dashed #e0e0e0;
+            border-radius: 12px;
+            min-height: 250px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: #fafafa;
+        }
+        #qrcode {
+            max-width: 220px;
+            margin-bottom: 15px;
+            display: none;
+            border-radius: 8px;
+        }
+        .timer {
+            font-size: 14px;
+            color: #888;
+            display: none;
+            font-weight: 500;
+        }
+        .btn-refresh {
+            background-color: #1877f2;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 15px;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 10px;
+            display: none;
+            font-weight: bold;
+        }
+        .btn-refresh:hover { background-color: #166fe5; }
+        #status-msg {
+            margin-top: 15px;
+            font-weight: bold;
+            color: #27ae60;
+        }
+        .network-warning {
+            font-size: 12px;
+            color: #e67e22;
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #fdf5e6;
+            border-radius: 6px;
+            display: none;
+        }
+    </style>
+    <!-- Socket.IO Client kütüphanesi -->
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+
+<div class="login-container">
+    <h2>Hızlı Giriş</h2>
+    <p class="subtitle">Telefonunuzun kamerasını açarak QR kodu okutun ve güvenle giriş yapın.</p>
+    
+    <div class="qr-box">
+        <div id="loading">QR Kod Yükleniyor...</div>
+        <img id="qrcode" src="" alt="QR Kod">
+        <div id="timer" class="timer">Geçerlilik süresi: <span id="time-left">60</span>s</div>
+        <button id="btn-refresh" class="btn-refresh" onclick="fetchQR()">Yenile</button>
+    </div>
+
+    <div id="status-msg"></div>
+
+    <div class="network-warning" id="network-warning">
+        Not: Gerçek telefon kamerasından denemek için bu sayfayı <b>localhost</b> yerine <b>yerel IP adresiniz</b> (örn: 192.168.x.x) ile açmanız gerekebilir.
+    </div>
+</div>
+
+<script>
+    const socket = io(); // Socket.IO sunucusuna bağlan
+    let countdownInterval;
+    let currentToken = '';
+
+    // Localhost kontrolü (Telefonda çalışması için IP adresi uyarısı)
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        document.getElementById('network-warning').style.display = 'block';
+    }
+
+    async function fetchQR() {
+        // UI'ı sıfırla
+        document.getElementById('loading').style.display = 'block';
+        document.getElementById('qrcode').style.display = 'none';
+        document.getElementById('timer').style.display = 'none';
+        document.getElementById('btn-refresh').style.display = 'none';
+        document.getElementById('status-msg').innerText = '';
+        clearInterval(countdownInterval);
+
+        try {
+            const response = await fetch('/api/auth/qr-generate');
+            const data = await response.json();
+
+            if (data.success) {
+                currentToken = data.qrToken;
+                
+                // QR kodu göster
+                document.getElementById('qrcode').src = data.qrCodeUrl;
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('qrcode').style.display = 'block';
+                document.getElementById('timer').style.display = 'block';
+                
+                // Socket.io ile qrToken odasına katıl
+                socket.emit('join-qr-room', currentToken);
+
+                // Sayacı başlat
+                let timeLeft = data.expiresIn; // 60 saniye
+                document.getElementById('time-left').innerText = timeLeft;
+                
+                countdownInterval = setInterval(() => {
+                    timeLeft -= 1;
+                    document.getElementById('time-left').innerText = timeLeft;
+                    
+                    if (timeLeft <= 0) {
+                        clearInterval(countdownInterval);
+                        expireQR();
+                    }
+                }, 1000);
+            }
+        } catch (error) {
+            console.error("QR üretilirken hata:", error);
+            document.getElementById('loading').innerText = "Bağlantı hatası!";
+        }
+    }
+
+    function expireQR() {
+        document.getElementById('qrcode').style.display = 'none';
+        document.getElementById('timer').style.display = 'none';
+        document.getElementById('loading').style.display = 'block';
+        document.getElementById('loading').innerHTML = '<span style="color:#e74c3c; font-weight:bold;">QR Kodun süresi doldu!</span>';
+        document.getElementById('btn-refresh').style.display = 'block';
+    }
+
+    // Socket.IO Dinleyicisi
+    socket.on('login-success', (data) => {
+        if (data.success) {
+            clearInterval(countdownInterval);
+            document.getElementById('qrcode').style.display = 'none';
+            document.getElementById('timer').style.display = 'none';
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('btn-refresh').style.display = 'none';
+            
+            document.getElementById('status-msg').innerText = "✓ Giriş başarılı! Yönlendiriliyorsunuz...";
+            
+            // Gerçek uygulamada session token veya JWT localStorage'a kaydedilir
+            localStorage.setItem('username', data.username);
+
+            // Dashboard'a yönlendir
+            setTimeout(() => {
+                window.location.href = '/dashboard.html';
+            }, 1000);
+        }
+    });
+
+    // Sayfa açıldığında QR üret
+    window.onload = fetchQR;
+
+</script>
+
+</body>
+</html>

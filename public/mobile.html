@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Girişi Onayla</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .mobile-container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 320px;
+            text-align: center;
+        }
+        h2 { margin-top: 0; color: #1877f2; }
+        .info-box {
+            background-color: #e7f3ff;
+            color: #0c5460;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        input {
+            width: 90%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 15px;
+            background-color: #f8f9fa;
+        }
+        input:focus { outline: none; border-color: #1877f2; }
+        button {
+            width: 100%;
+            padding: 14px;
+            background-color: #1877f2;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: background 0.3s;
+        }
+        button:hover { background-color: #166fe5; }
+        button:disabled { background-color: #a0c3ff; cursor: not-allowed; }
+        #result { margin-top: 15px; font-weight: bold; font-size: 14px; }
+        
+        /* Token input'unu gizli tutuyoruz, URL'den otomatik alınacak */
+        #qrtoken { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="mobile-container" id="main-container">
+    <h2>Giriş İsteği</h2>
+    
+    <div class="info-box">
+        Bir bilgisayardan veya tarayıcıdan hesabınıza giriş yapılmak isteniyor. Onaylamak için bilgilerinizi girin.
+    </div>
+    
+    <input type="text" id="username" placeholder="Kullanıcı Adı" value="testuser">
+    <input type="password" id="password" placeholder="Şifre" value="123456">
+    <input type="text" id="qrtoken">
+    
+    <button id="submit-btn" onclick="verifyQR()">Girişi Onayla</button>
+
+    <div id="result"></div>
+</div>
+
+<script>
+    // Sayfa yüklendiğinde URL'den token'ı al
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    
+    if (token) {
+        document.getElementById('qrtoken').value = token;
+    } else {
+        // Eğer linkte token yoksa (yanlışlıkla girilmişse) uyarı ver
+        document.getElementById('main-container').innerHTML = `
+            <h2>Geçersiz İstek</h2>
+            <p style="color: red;">Geçerli bir giriş token'ı bulunamadı. Lütfen QR kodu kameranızla tekrar okutun.</p>
+        `;
+    }
+
+    async function verifyQR() {
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        const qrToken = document.getElementById('qrtoken').value;
+        const resultDiv = document.getElementById('result');
+        const btn = document.getElementById('submit-btn');
+
+        if (!username || !password || !qrToken) {
+            resultDiv.style.color = '#e74c3c';
+            resultDiv.innerText = "Lütfen tüm alanları doldurun!";
+            return;
+        }
+
+        btn.disabled = true;
+        resultDiv.style.color = '#f39c12';
+        resultDiv.innerText = "Doğrulanıyor...";
+
+        try {
+            const response = await fetch('/api/auth/qr-verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password, qrToken })
+            });
+            
+            const data = await response.json();
+
+            if (data.success) {
+                resultDiv.style.color = '#27ae60';
+                resultDiv.innerText = "Giriş Onaylandı! Web tarayıcınıza bakabilirsiniz.";
+                document.getElementById('main-container').innerHTML = `
+                    <h2 style="color:#27ae60;">✓ Başarılı</h2>
+                    <p>Web oturumu başarıyla açıldı. Bu sekmeyi kapatabilirsiniz.</p>
+                `;
+            } else {
+                resultDiv.style.color = '#e74c3c';
+                resultDiv.innerText = "Hata: " + data.message;
+                btn.disabled = false;
+            }
+        } catch (error) {
+            resultDiv.style.color = '#e74c3c';
+            resultDiv.innerText = "Sunucuya bağlanılamadı.";
+            btn.disabled = false;
+        }
+    }
+</script>
+
+</body>
+</html>

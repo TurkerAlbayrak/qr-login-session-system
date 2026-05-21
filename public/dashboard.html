@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - İçerideyiz!</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 0;
+        }
+        .header {
+            background-color: #343a40;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        h1 { color: #28a745; }
+        .logout-btn {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #dc3545;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        .logout-btn:hover { background-color: #c82333; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h2>Gizli Yönetim Paneli</h2>
+    </div>
+
+    <div class="container">
+        <h1>Hoş Geldiniz, <span id="user-name">Kullanıcı</span>!</h1>
+        <p>QR Kod ile giriş başarılı bir şekilde tamamlandı. Bu sayfa sadece oturum açan kullanıcılara özeldir.</p>
+        
+        <a href="/" onclick="logout()" class="logout-btn">Çıkış Yap</a>
+    </div>
+
+    <script>
+        // Basit localStorage kontrolü (Güvenlik için gerçek sistemde HTTPOnly çerezler ile session veya JWT kontrolü yapılır)
+        const username = localStorage.getItem('username');
+        if (!username) {
+            alert("Lütfen önce giriş yapın!");
+            window.location.href = '/';
+        } else {
+            document.getElementById('user-name').innerText = username;
+        }
+
+        function logout() {
+            localStorage.removeItem('username');
+        }
+    </script>
+</body>
+</html>
