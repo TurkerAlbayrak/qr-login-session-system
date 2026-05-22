@@ -1,4 +1,4 @@
-# 📱 QR Login Session System (QR Kod ile Gerçek Zamanlı Giriş)
+# QR Login Session System (QR Kod ile Gerçek Zamanlı Giriş)
 
 Bu proje, WhatsApp Web, Discord veya Binance gibi platformlarda kullanılan **"QR Kod ile Hızlı Giriş" (QR Code Authentication)** mimarisinin sıfırdan, production-ready (canlı ortama yakın) mantıkla geliştirilmiş bir kopyasıdır. 
 
@@ -6,7 +6,7 @@ Sistem; masaüstü tarayıcısında (web) oluşturulan boş bir oturum kimliğin
 
 ---
 
-## 🚀 Özellikler
+## Özellikler
 
 - **Gerçek Zamanlı İletişim:** Socket.IO kullanılarak mobil cihazdan onay verildiği an web sayfası sayfayı yenilemeden direkt içeri girer.
 - **Dinamik QR Kodlar:** QR kodların içerisine sadece bir UUID (token) değil, direkt onaylama sayfasının tam URL'i yerleştirilmiştir. Kodu okutan cihaz anında onay ekranına gider.
@@ -15,7 +15,7 @@ Sistem; masaüstü tarayıcısında (web) oluşturulan boş bir oturum kimliğin
 
 ---
 
-## 🛠 Kullanılan Teknolojiler
+## Kullanılan Teknolojiler
 
 - **Backend:** Node.js, Express.js
 - **Real-Time (WebSockets):** Socket.IO
@@ -25,7 +25,7 @@ Sistem; masaüstü tarayıcısında (web) oluşturulan boş bir oturum kimliğin
 
 ---
 
-## 📂 Proje Klasör Yapısı
+## Proje Klasör Yapısı
 
 ```text
 c:\qrsessionsystem\
@@ -42,7 +42,7 @@ c:\qrsessionsystem\
 
 ---
 
-## ⚙️ Kurulum ve Çalıştırma
+## Kurulum ve Çalıştırma
 
 Projenin bilgisayarınızda çalışması için Node.js'in kurulu olması gerekir.
 
@@ -60,7 +60,7 @@ Projenin bilgisayarınızda çalışması için Node.js'in kurulu olması gereki
 
 ---
 
-## 🧪 Sistemi Nasıl Test Edebilirsiniz?
+## Sistemi Nasıl Test Edebilirsiniz?
 
 ### Yöntem 1: Aynı Bilgisayarda Sekmelerle (Simülasyon)
 1. Tarayıcınızda `http://localhost:3000` adresini açın.
@@ -79,7 +79,7 @@ Projenin bilgisayarınızda çalışması için Node.js'in kurulu olması gereki
 
 ---
 
-## 🧠 Sistemin Arka Plan Mantığı (Nasıl Çalışıyor?)
+## Sistemin Arka Plan Mantığı (Nasıl Çalışıyor?)
 
 1. **İstek (Web):** `index.html` açıldığında backend'den bir token ister.
 2. **Üretim (Backend):** Backend rastgele bir `uuid` üretir, 60 saniyelik ömür biçer ve veritabanına `user_id = null` olarak kaydeder.
@@ -90,7 +90,7 @@ Projenin bilgisayarınızda çalışması için Node.js'in kurulu olması gereki
 
 ---
 
-## 🔮 Geliştirme Önerileri (Production'a Çıkmadan Önce)
+## Geliştirme Önerileri (Production'a Çıkmadan Önce)
 
 Eğer bu sistemi gerçek bir canlı sunucuya kurmak isterseniz:
 1. `mobile.html` dosyasındaki `<input type="text" value="testuser">` kısmındaki `value` değerlerini silin. Kullanıcılar kendi şifrelerini elle girmelidir.
